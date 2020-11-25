@@ -1,6 +1,6 @@
 {
   "name": "better-install",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "license": "MIT",
   "description": "Automatically install typescript types when installing or adding dependencies.",
   "main": "./src/index.ts",
