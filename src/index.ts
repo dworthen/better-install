@@ -12,8 +12,8 @@ const log = debug('better-install')
 const cliFlagOptions: Record<string, ArgOption> = {
   pm: {
     type: 'string',
-    map: (arg) => {
-      if (arg && typeof arg === 'string') {
+    map: arg => {
+      if (arg != null && typeof arg === 'string') {
         return arg.toLowerCase()
       }
       return arg
@@ -36,21 +36,21 @@ function loadNpmrc(dirPath: string): Record<string, any> | null {
   }
 }
 function setPackageManager(args: ArgvilleParsedArguments): void {
-  if (process.env.npm_execpath) {
+  if (process.env.npm_execpath != null) {
     args.pm = process.env.npm_execpath
     return
   }
 
   const localNpmrc = loadNpmrc(process.cwd())
 
-  if (localNpmrc && localNpmrc.pm) {
+  if (localNpmrc?.pm != null) {
     args.pm = localNpmrc.pm
     return
   }
 
-  const userNpmrc = loadNpmrc(homedir() || tmpdir())
+  const userNpmrc = loadNpmrc(homedir() ?? tmpdir())
 
-  if (userNpmrc && userNpmrc.pm) {
+  if (userNpmrc?.pm != null) {
     args.pm = userNpmrc.pm
     return
   }
@@ -58,11 +58,11 @@ function setPackageManager(args: ArgvilleParsedArguments): void {
   args.pm = 'npm'
 }
 
-function isYarn(pm: string) {
+function isYarn(pm: string): boolean {
   return /yarn(?:\.js)?$/i.test(pm)
 }
 
-function isPnpm(pm: string) {
+function isPnpm(pm: string): boolean {
   return /pnpm(?:\.js)?$/i.test(pm)
 }
 
@@ -89,16 +89,16 @@ function toArgArray(args: ArgvilleParsedArguments): string[] {
 
 async function includesTypes(pkg: string): Promise<string> {
   const [pkgJson, declarationStatus] = await Promise.all([
-    fetch(`https://cdn.jsdelivr.net/npm/${pkg}/package.json`).then((res) => {
+    fetch(`https://cdn.jsdelivr.net/npm/${pkg}/package.json`).then(res => {
       if (!res.ok) return {} as any
       return res.json()
     }),
     fetch(`https://cdn.jsdelivr.net/npm/${pkg}/index.d.ts`).then(
-      (res) => res.status,
+      res => res.status,
     ),
   ])
 
-  if (pkgJson.types || pkgJson.typings) return 'Included'
+  if (pkgJson.types != null || pkgJson.typings != null) return 'Included'
   if (declarationStatus === 200) return 'Included'
   return pkg
 }
@@ -112,11 +112,11 @@ async function npmPackageExists(pkg: string): Promise<string> {
 }
 
 async function loadTypeInfo(packages: string[]): Promise<string[]> {
-  const packagesWithTypes = packages.map(async (pkg) => {
-    return includesTypes(pkg)
+  const packagesWithTypes = packages.map(async pkg => {
+    return await includesTypes(pkg)
   })
   const packagesWithRemoteTypes = (await Promise.all(packagesWithTypes)).map(
-    (pkg) => {
+    pkg => {
       return pkg === 'Included'
         ? pkg
         : npmPackageExists(packageNameToTypesName(pkg))
@@ -130,10 +130,10 @@ function loadNonTypePackages(): string[] {
     const pkgPath = resolve(process.cwd(), 'package.json')
     if (existsSync(pkgPath)) {
       const pkgJson = JSON.parse(readFileSync(pkgPath, 'utf-8'))
-      const prodDeps = pkgJson.dependencies || {}
-      const devDeps = pkgJson.devDependencies || {}
+      const prodDeps = pkgJson.dependencies ?? {}
+      const devDeps = pkgJson.devDependencies ?? {}
       const allDeps = Object.keys({ ...prodDeps, ...devDeps })
-      return allDeps.filter((dep) => {
+      return allDeps.filter(dep => {
         if (/^@types/i.test(dep)) return false
         if (allDeps.includes(packageNameToTypesName(dep))) return false
         return true
@@ -142,8 +142,12 @@ function loadNonTypePackages(): string[] {
   } catch (ex) {}
   return []
 }
-async function installDeps(pm: string, packages: string[], cmdArgs: string[]) {
-  if (packages.length && (isYarn(pm) || isPnpm(pm))) {
+async function installDeps(
+  pm: string,
+  packages: string[],
+  cmdArgs: string[],
+): Promise<execa.ExecaChildProcess<string>> {
+  if (packages.length > 0 && (isYarn(pm) || isPnpm(pm))) {
     cmdArgs.unshift('add')
   } else {
     cmdArgs.unshift('install')
@@ -151,30 +155,30 @@ async function installDeps(pm: string, packages: string[], cmdArgs: string[]) {
 
   const allCmdArgs = [...cmdArgs, ...packages]
 
-  log(`Installing packages: %s %s`, pm, allCmdArgs.join(' '))
+  log('Installing packages: %s %s', pm, allCmdArgs.join(' '))
 
   const cmd = execa(pm, allCmdArgs)
   cmd.stdout?.pipe(process.stdout)
   cmd.stderr?.pipe(process.stderr)
 
-  return cmd
+  return await cmd
 }
-async function install(args: ArgvilleParsedArguments) {
-  const pm: string = args.pm! as string
+async function install(args: ArgvilleParsedArguments): Promise<void> {
+  const pm: string = args.pm ?? ''
   const cmdArgs = toArgArray(args)
   const packages: string[] = args._
 
   const depInstallation = installDeps(pm, packages, cmdArgs)
 
-  const packagesToCheck = packages.length ? packages : loadNonTypePackages()
+  const packagesToCheck = packages.length > 0 ? packages : loadNonTypePackages()
   const packageTypesInfo = await loadTypeInfo(packagesToCheck)
   const typesPacakgesToInstall = packageTypesInfo.filter(
-    (pkg) => pkg !== 'Included' && pkg !== 'Not Found',
+    pkg => pkg !== 'Included' && pkg !== 'Not Found',
   )
 
   let typesInstallation
-  if (typesPacakgesToInstall.length) {
-    console.log(`Installing types: `)
+  if (typesPacakgesToInstall.length > 0) {
+    console.log('Installing types: ')
     console.log(typesPacakgesToInstall.join('\n'))
     typesInstallation = installDeps(pm, typesPacakgesToInstall, ['-D'])
     console.log()
@@ -200,18 +204,18 @@ async function install(args: ArgvilleParsedArguments) {
 function loadArgs(argv: string[]): ArgvilleParsedArguments {
   const args = parseAndValidate({ flags: cliFlagOptions }, argv.slice(2))
 
-  if (args.verbose) {
+  if (args.verbose != null) {
     debug.enable('better-install')
   }
 
-  if (!args.pm) {
+  if (args.pm != null) {
     setPackageManager(args)
   }
 
   return args
 }
 
-export async function run(argv: string[]) {
+export async function run(argv: string[]): Promise<void> {
   const args = loadArgs(argv)
   log('Args: %O', args)
 
