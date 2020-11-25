@@ -6,10 +6,11 @@ import execa from 'execa'
 import debug from 'debug'
 import { ArgOption, ArgvilleParsedArguments, parseAndValidate } from 'argville'
 import fetch from 'node-fetch'
+import cliui from 'cliui'
 
 const log = debug('better-install')
 
-const cliFlagOptions: Record<string, ArgOption> = {
+const cliFlagOptions: Record<string, ArgOption & { description?: string }> = {
   pm: {
     type: 'string',
     map: arg => {
@@ -19,11 +20,22 @@ const cliFlagOptions: Record<string, ArgOption> = {
       return arg
     },
     expected: ['npm', 'yarn', 'pnpm'],
+    description:
+      'Select package manager. Defaults to npm or, if used as an npm script, ' +
+      'the package manager that invokes the script',
   },
 
   verbose: {
     type: 'boolean',
     default: false,
+    description: 'Print debug messages.',
+  },
+
+  help: {
+    type: 'boolean',
+    alias: 'h',
+    default: false,
+    description: 'Print help message.',
   },
 }
 
@@ -71,7 +83,7 @@ function packageNameToTypesName(pkgName: string): string {
 }
 
 function toArgArray(args: ArgvilleParsedArguments): string[] {
-  const ignore = ['_', 'pm', 'verbose']
+  const ignore = ['_', 'pm', 'verbose', 'help']
   return Object.entries(args).reduce<string[]>((acc, [flag, value]) => {
     if (ignore.includes(flag)) return acc
     const prepend = flag.length === 1 ? '-' : '--'
@@ -201,22 +213,130 @@ async function install(args: ArgvilleParsedArguments): Promise<void> {
   }
 }
 
+interface GetHelpOptions {
+  flagOptions: Record<string, ArgOption & { description?: string }>
+  usage: string
+  description: string
+  name: string
+  version: string
+}
+function getHelp({
+  flagOptions,
+  usage,
+  description,
+  name,
+  version,
+}: GetHelpOptions): string {
+  const ui = cliui()
+
+  ui.div(`\n${name}\n` + `Version: ${version}\n`)
+
+  ui.div({
+    text: description,
+    padding: [0, 0, 1, 3],
+  })
+
+  ui.div('Usage:\n')
+
+  ui.div({
+    text: usage,
+    padding: [0, 0, 1, 3],
+  })
+
+  const flags = Object.entries(flagOptions)
+
+  if (flags.length > 0) {
+    ui.div('Options:')
+  }
+  flags.forEach(([flag, options]) => {
+    const flags = []
+    const description = options.description ?? ''
+    const lb = options.required === true ? '<' : '['
+    const rb = options.required === true ? '>' : ']'
+    const printValue = options.type !== 'boolean'
+    const ellipses = options.multiple === true ? '...' : ''
+    const value = printValue ? `${lb}${flag}${ellipses}${rb}` : ''
+    const defaultValue =
+      options.default != null ? `(default=${options.default as string})` : ''
+
+    if (options.alias != null) {
+      if (Array.isArray(options.alias)) {
+        options.alias.forEach(alias => {
+          flags.push(`-${alias}`)
+        })
+      } else {
+        flags.push(`-${options.alias}`)
+      }
+    }
+
+    flags.push(`--${flag}`)
+
+    ui.div(
+      {
+        text: `${flags.join(', ')} ${value}`,
+        width: 20,
+        padding: [0, 0, 1, 0],
+      },
+      {
+        text: description,
+        padding: [0, 0, 1, 0],
+      },
+      {
+        text: defaultValue,
+        wdith: 20,
+        padding: [0, 0, 1, 0],
+      },
+    )
+  })
+
+  ui.div('NOTE:\n')
+
+  ui.div({
+    text:
+      `${name} passes unknown flags to the underlying package manager. ` +
+      'For example, "bi lodash -D" will send the -D flag to the package manager and ' +
+      'therfore install lodash and @types/lodash as devDependencies ' +
+      '(@types are always installed as devDependencies).',
+    padding: [0, 0, 1, 3],
+  })
+
+  return ui.toString()
+}
+
 function loadArgs(argv: string[]): ArgvilleParsedArguments {
   const args = parseAndValidate({ flags: cliFlagOptions }, argv.slice(2))
-
-  if (args.verbose != null) {
-    debug.enable('better-install')
-  }
-
-  if (args.pm != null) {
-    setPackageManager(args)
-  }
 
   return args
 }
 
 export async function run(argv: string[]): Promise<void> {
   const args = loadArgs(argv)
+
+  if (args.verbose === true) {
+    debug.enable('better-install')
+  }
+
+  if (args.help === true) {
+    const packageJson = JSON.parse(
+      readFileSync(resolve(__dirname, '../package.json'), 'utf-8'),
+    )
+    console.log(
+      getHelp({
+        flagOptions: cliFlagOptions,
+        usage: `${packageJson.name as string} [packages...] [options]`,
+        description:
+          'Automatically install TypeScript @types when adding/installing dependencies',
+        name: packageJson.name,
+        version: packageJson.version,
+      }),
+    )
+    process.exit(1)
+  }
+
+  if (args.pm == null) {
+    setPackageManager(args)
+  }
+
   log('Args: %O', args)
 
   await install(args)
