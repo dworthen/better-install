@@ -182,8 +182,15 @@ async function install(args: ArgvilleParsedArguments) {
 
   await Promise.all([depInstallation, typesInstallation])
 
+  if (packageTypesInfo.includes('Included')) {
+    console.log('Types are included with the following packages:')
+    packageTypesInfo.forEach((_, ind) => {
+      console.log(packagesToCheck[ind])
+    })
+  }
+
   if (packageTypesInfo.includes('Not Found')) {
-    console.log('Could not find types for: ')
+    console.log('Could not find types for the following packages: ')
     packageTypesInfo.forEach((_, ind) => {
       console.log(packagesToCheck[ind])
     })
