@@ -1,0 +1,14 @@
+# dependencies
+node_modules
+*-lock.json
+*-lock.yaml
+
+# build artifacts
+pkg
+
+# logs
+*.log
+
+# test output
+.nyc_output
+coverage

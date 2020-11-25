@@ -1,0 +1,12 @@
+# dependencies
+node_modules
+
+# build artifacts
+pkg
+
+# logs
+*.log
+
+# test output
+.nyc_output
+coverage
