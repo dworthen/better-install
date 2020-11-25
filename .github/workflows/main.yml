@@ -33,6 +33,11 @@ jobs:
       - name: install
         run: pnpm install
 
+      - name: Check format
+        run: |
+          pnpm format:check
+          pnpm lint:check
+
       - name: build
         run: pnpm build
 

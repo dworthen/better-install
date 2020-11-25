@@ -1,9 +1,9 @@
 # dependencies
 node_modules
-*-lock.json
-*-lock.yaml
+*.json
+*.yaml
 
-# RC files
+# config files
 .*
 
 # build artifacts
