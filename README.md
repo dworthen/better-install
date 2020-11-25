@@ -2,42 +2,37 @@
 
 # Better Install
 
-Automagically install typescript [@types](https://github.com/DefinitelyTyped/DefinitelyTyped) when installing/adding dependencies.
+Automatically install TypeScript [@types](https://github.com/DefinitelyTyped/DefinitelyTyped) when installing/adding dependencies.
 
 Inspired by [@yarnpkg/plugin-typescript](https://www.npmjs.com/package/@yarnpkg/plugin-typescript) but works with `yarn@1`, `yarn@2`, `pnpm` and `npm`.
 
 <!-- prettier-ignore -->
 - [Install](#install)
-      - [yarn](#yarn)
-      - [pnpm](#pnpm)
-      - [npm](#npm)
 - [Configure](#configure)
 - [Add Packages](#add-packages)
-      - [yarn](#yarn-1)
-      - [pnpm](#pnpm-1)
-      - [npm](#npm-1)
 - [Install All Pacakges](#install-all-pacakges)
 - [Add devDependency](#add-devdependency)
-- [As Global Bin](#as-global-bin)
-  - [Install All Packages](#install-all-packages)
-  - [Select a Package Manager](#select-a-package-manager)
-  - [Project or User Config](#project-or-user-config)
+- [CLI Options](#cli-options)
+- [As a Global Bin](#as-a-global-bin)
+	- [Install All Packages](#install-all-packages)
+	- [Select a Package Manager](#select-a-package-manager)
+	- [Project or User Config](#project-or-user-config)
 
 ## Install
 
-##### yarn
+**yarn**
 
 ```shell
 yarn add -D better-install
 ```
 
-##### pnpm
+**pnpm**
 
 ```shell
 pnpm add -D better-install
 ```
 
-##### npm
+**npm**
 
 ```shell
 npm install -D better-install
@@ -49,7 +44,6 @@ _**package.json**_
 
 ```json
 {
-  ...
   "scripts": {
     "bi": "better-install"
   }
@@ -60,7 +54,7 @@ _**package.json**_
 
 ## Add Packages
 
-##### yarn
+**yarn**
 
 ```shell
 yarn bi lodash yargs-parser minimist-options argville
@@ -72,27 +66,25 @@ Install packages as a prod dependencies and corresponding `@types/` as a devDepe
 >
 > Like `minimist-options`, `argville` comes bundled with `types` and therfore `better-install` skips installing `@types/argville`.
 
-> :star: `better-install` supports both `yarn@1` and `yarn@2`/`berry`.
+> :star: `better-install` supports both `yarn@1` and `yarn@2`.
 
-##### pnpm
+> :thumbsup: `better-install` also supports locating and installing `@types/` for scoped packages.
+
+**pnpm**
 
 ```shell
 pnpm bi -- lodash yargs-parser minimist-options argville
 ```
 
-Install packages and types using `pnpm`.
-
-##### npm
+**npm**
 
 ```shell
 npm run bi -- lodash yargs-parser minimist-options argville
 ```
 
-Install packages and types using `npm`.
-
 ## Install All Pacakges
 
-Run `better-install` without any args to install all packages listed in _package.json_ and the corresponding `@types/`.
+Run `better-install` without any args to install all packages listed in _package.json_ and corresponding `@types/`.
 
 ```shell
 # with yarn
@@ -100,7 +92,7 @@ yarn bi
 # OR pnpm
 pnpm bi
 # OR npm
-npm bi
+npm run bi
 ```
 
 ## Add devDependency
@@ -113,12 +105,45 @@ yarn bi -D lodash
 # OR pnpm
 pnpm bi -D lodash
 # OR npm
-npm bi --save-dev lodash
+npm run bi --save-dev lodash
 ```
 
 Installs `lodash` and `@types/lodash` as devDependencies.
 
-## As Global Bin
+## CLI Options
+
+Run `yarn bi --help` (or with `pnpm` or `npm`) to view a full list of options.
+
+<table>
+	<tr>
+		<th>Option</th>
+		<th>Description</th>
+		<th>Default</th>
+	</tr>
+	<tr>
+		<td>--pm [npm|yarn|pnpm]</td>
+		<td>
+			Select the package manager to use to install dependencies. Defaults to npm or, 
+			if used as an npm script, the package manager that invoked the script
+		</td>
+		<td>
+		</td>
+	</tr>
+	<tr>
+		<td>--verbose</td>
+		<td>Print debug messages.</td>
+		<td>false</td>
+	</tr>
+	<tr>
+		<td>-h, --help</td>
+		<td>Print help message.</td>
+		<td>false</td>
+	</tr>
+</table>
+
+> :warning: better-install passes unknown flags to the underlying package manager. For example, `bi lodash -D` sends the -D flag to the package manager and therfore installs `lodash` and `@types/lodash` as devDependencies (`@types` are always installed as devDependencies).
+
+## As a Global Bin
 
 May also install `better-install` globally
 
@@ -139,11 +164,11 @@ Exposes two bins, `better-install` and, for convenience, `bi`.
 bi
 ```
 
-Installs all packages listed in _CWD/package.json_.
+Installs all packages listed in _\<CWD>/package.json_.
 
 ### Select a Package Manager
 
-As a global bin, `better-install` uses `npm` by default. This can be overriden using `--pm`.
+As a global bin, `better-install` uses `npm` by default. Override this using the `--pm` option.
 
 ```shell
 # install all package.json dependencies and @types with yarn
