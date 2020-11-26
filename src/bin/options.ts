@@ -30,4 +30,11 @@ export const cliFlagOptions: Record<
     default: false,
     description: 'Print help message.',
   },
+
+  colors: {
+    type: 'boolean',
+    default: true,
+    description:
+      'Prints colors to stdin and stderr. use --no-colors to disable.',
+  },
 }

@@ -5,7 +5,9 @@
   "description": "Automatically install typescript types when installing or adding dependencies.",
   "main": "./src/index.ts",
   "scripts": {
+    "bi": "./pkg/dist-node/index.bin.js",
     "clean": "shx rm -rf ./pkg/",
+    "build:check": "tsc --noEmit",
     "build": "pika-pack build",
     "start": "nodemon --watch src -e ts --exec pnpm build",
     "format:check": "prettier --check .",
@@ -96,10 +98,9 @@
     "typescript": "^4.1.2"
   },
   "dependencies": {
-    "@types/debug": "^4.1.5",
     "argville": "^0.0.3",
+    "chalk": "^4.1.0",
     "cliui": "^7.0.4",
-    "debug": "^4.3.1",
     "execa": "^4.1.0",
     "ini": "^1.3.5",
     "node-fetch": "^2.6.1",

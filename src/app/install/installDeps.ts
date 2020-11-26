@@ -1,4 +1,5 @@
-import { isPnpm, isYarn, log } from '../util'
+import { isPnpm, isYarn } from '../util'
+import { log } from '../logger'
 import execa from 'execa'
 
 export async function installDeps(

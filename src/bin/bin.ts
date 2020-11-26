@@ -1,23 +1,27 @@
 import { loadArgs } from './loadArgs'
-import debug from 'debug'
 import { readFileSync } from 'fs'
 import { getHelp } from './usage'
 import { resolve } from 'path'
 import { cliFlagOptions } from './options'
-import { install, log } from '../app'
+import { install } from '../app'
+import * as logger from '../app/logger'
 
 export async function run(argv: string[]): Promise<void> {
   const args = loadArgs(argv)
 
   if (args.verbose === true) {
-    debug.enable('better-install')
+    logger.setLogLevel(logger.LOG_LEVEL.Debug)
+  }
+
+  if (args.colors === false) {
+    logger.setColors(false)
   }
 
   if (args.help === true) {
     const packageJson = JSON.parse(
       readFileSync(resolve(__dirname, '../package.json'), 'utf-8'),
     )
-    console.log(
+    logger.log(
       getHelp({
         flagOptions: cliFlagOptions,
         usage: `${packageJson.name as string} [packages...] [options]`,
@@ -30,7 +34,7 @@ export async function run(argv: string[]): Promise<void> {
     process.exit(1)
   }
 
-  log('Args: %O', args)
+  logger.info('Args: %O', args)
 
   await install(args)
 }
