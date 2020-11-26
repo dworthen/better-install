@@ -15,8 +15,7 @@
     "lint:staged": "lint-staged",
     "release:changeset": "changeset",
     "release:version": "changeset version",
-    "release:npm": "npm-publish --token $NPM_TOKEN ./pkg/package.json",
-    "env": "echo $npm_execpath"
+    "release:npm": "npm-publish --token $NPM_TOKEN ./pkg/package.json"
   },
   "keywords": [
     "install",
