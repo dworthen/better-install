@@ -3,7 +3,7 @@ import cliui from 'cliui'
 
 export interface GetHelpOptions {
   flagOptions: Record<string, ArgOption & { description?: string }>
-  usage: string
+  usage: string[]
   description: string
   name: string
   version: string
@@ -26,9 +26,11 @@ export function getHelp({
 
   ui.div('Usage:\n')
 
-  ui.div({
-    text: usage,
-    padding: [0, 0, 1, 3],
+  usage.forEach(use => {
+    ui.div({
+      text: usage,
+      padding: [0, 0, 1, 3],
+    })
   })
 
   const flags = Object.entries(flagOptions)
@@ -82,8 +84,8 @@ export function getHelp({
   ui.div({
     text:
       `${name} passes unknown flags to the underlying package manager. ` +
-      'For example, "bi lodash -D" will send the -D flag to the package manager and ' +
-      'therfore install lodash and @types/lodash as devDependencies ' +
+      'For example, "bi lodash -D" sends the -D flag to the package manager and ' +
+      'therfore installs lodash and @types/lodash as devDependencies ' +
       '(@types are always installed as devDependencies).',
     padding: [0, 0, 1, 3],
   })

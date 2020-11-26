@@ -1,5 +1,4 @@
 import { isPnpm, isYarn } from '../util'
-import { log } from '../logger'
 import execa from 'execa'
 
 export async function installDeps(
@@ -14,8 +13,6 @@ export async function installDeps(
   }
 
   const allCmdArgs = [...cmdArgs, ...packages]
-
-  log('Installing packages: %s %s', pm, allCmdArgs.join(' '))
 
   const cmd = execa(pm, allCmdArgs)
   cmd.stdout?.pipe(process.stdout)

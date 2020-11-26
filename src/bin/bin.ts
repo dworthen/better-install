@@ -1,10 +1,8 @@
 import { loadArgs } from './loadArgs'
-import { readFileSync } from 'fs'
-import { getHelp } from './usage'
-import { resolve } from 'path'
 import { cliFlagOptions } from './options'
-import { install } from '../app'
+import { install, loadPackageJson } from '../app'
 import * as logger from '../app/logger'
+import { printHelp } from '../app/logger/printHelp'
 
 export async function run(argv: string[]): Promise<void> {
   const args = loadArgs(argv)
@@ -18,23 +16,16 @@ export async function run(argv: string[]): Promise<void> {
   }
 
   if (args.help === true) {
-    const packageJson = JSON.parse(
-      readFileSync(resolve(__dirname, '../package.json'), 'utf-8'),
-    )
-    logger.log(
-      getHelp({
-        flagOptions: cliFlagOptions,
-        usage: `${packageJson.name as string} [packages...] [options]`,
-        description:
-          'Automatically install TypeScript @types when adding/installing dependencies',
-        name: packageJson.name,
-        version: packageJson.version,
-      }),
-    )
+    const packageJson = await loadPackageJson()
+    printHelp({
+      packageInfo: packageJson,
+      flagOptions: cliFlagOptions,
+      usage: ['bi [packages...] [options]'],
+    })
     process.exit(1)
   }
 
-  logger.info('Args: %O', args)
+  logger.debug('CLI Args: %O', args)
 
   await install(args)
 }
