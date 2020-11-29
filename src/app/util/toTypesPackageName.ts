@@ -1,3 +1,7 @@
 export function toTypesPackageName(pkgName: string): string {
-  return `@types/${pkgName.replace(/\//g, '__')}`
+  const typesName = pkgName
+    .replace(/^@/, '')
+    .replace(/@.*/, '')
+    .replace(/\//g, '__')
+  return `@types/${typesName}`
 }

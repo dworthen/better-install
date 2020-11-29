@@ -9,7 +9,7 @@ export function isPnpm(pm: string): boolean {
   return /pnpm(?:\.js)?$/i.test(pm)
 }
 
-export async function includesTypes(pkg: string): Promise<string> {
+export async function includesTypes(pkg: string): Promise<boolean> {
   const [pkgJson, declarationStatus] = await Promise.all([
     fetch(`https://cdn.jsdelivr.net/npm/${pkg}/package.json`).then(res => {
       if (!res.ok) return {} as any
@@ -20,15 +20,15 @@ export async function includesTypes(pkg: string): Promise<string> {
     ),
   ])
 
-  if (pkgJson.types != null || pkgJson.typings != null) return 'Included'
-  if (declarationStatus === 200) return 'Included'
-  return pkg
+  if (pkgJson.types != null || pkgJson.typings != null) return true
+  if (declarationStatus === 200) return true
+  return false
 }
 
-export async function npmPackageExists(pkg: string): Promise<string> {
+export async function npmPackageExists(pkg: string): Promise<boolean> {
   try {
     await execa('npm', ['view', pkg, 'version'])
-    return pkg
+    return true
   } catch (ex) {}
-  return 'Not Found'
+  return false
 }

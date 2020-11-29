@@ -19,7 +19,7 @@ const formatMap = new Map<number, chalk.Chalk>([
   [5, chalk.blue.bgBlack],
 ])
 
-let logLevel: LOG_LEVEL = LOG_LEVEL.Warn
+let logLevel: LOG_LEVEL = LOG_LEVEL.Info
 let colors = true
 const colorSupport = chalk.level
 
@@ -43,7 +43,8 @@ function _printer(
       const msg = (prepend + message)
         .replace(/\{/g, '_-_[')
         .replace(/\}/g, ']_-_')
-      const expanded = formatWithOptions({ colors: true }, msg, ...args)
+      const expanded = formatWithOptions({ colors: colors }, msg, ...args)
+        .replace(/\\/g, '\\\\')
         .replace(/\{/g, '\\{')
         .replace(/\}/g, '\\}')
         .replace(/_-_\[/g, '{')
