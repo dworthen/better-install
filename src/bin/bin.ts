@@ -131,9 +131,9 @@ export async function run(argv: string[]): Promise<void> {
     )
 
     if (typePackagesToInstall.length > 0) {
-      logger.info('Installing @types %O', typePackagesToInstall)
       logger.debug('Install types command: %s', installTypesCommand)
       logger.debug('Package directory: %s', dir)
+      logger.info('Installing @types %O', typePackagesToInstall)
 
       await install(installTypesCommand, dir)
     } else {

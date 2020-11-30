@@ -14,9 +14,9 @@ Inspired by [@yarnpkg/plugin-typescript](https://www.npmjs.com/package/@yarnpkg/
 - [Add devDependency](#add-devdependency)
 - [CLI Options](#cli-options)
 - [As a Global Bin](#as-a-global-bin)
-  - [Install All Packages](#install-all-packages-1)
-  - [Select a Package Manager](#select-a-package-manager)
-  - [Project or User Config](#project-or-user-config)
+	- [Install All Packages](#install-all-packages-1)
+	- [Select a Package Manager](#select-a-package-manager)
+	- [Project or User Config](#project-or-user-config)
 - [MonoRepo Projects](#monorepo-projects)
 
 ## Install

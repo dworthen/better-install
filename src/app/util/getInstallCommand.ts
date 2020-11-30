@@ -5,11 +5,12 @@ export function getInstallCommand(
   packages: string[],
   cmdArgs: string[],
 ): string {
+  const args = [...cmdArgs]
   if (packages.length > 0 && (isYarn(pm) || isPnpm(pm))) {
-    cmdArgs.unshift('add')
+    args.unshift('add')
   } else {
-    cmdArgs.unshift('install')
+    args.unshift('install')
   }
 
-  return [pm, ...cmdArgs, ...packages].join(' ')
+  return [pm.replace(/\s/g, '\\ '), ...args, ...packages].join(' ')
 }
