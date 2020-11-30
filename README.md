@@ -2,7 +2,7 @@
 
 # Better Install
 
-Automatically install TypeScript [@types](https://github.com/DefinitelyTyped/DefinitelyTyped) when installing/adding dependencies.
+Automatically install TypeScript [@types](https://github.com/DefinitelyTyped/DefinitelyTyped).
 
 Inspired by [@yarnpkg/plugin-typescript](https://www.npmjs.com/package/@yarnpkg/plugin-typescript) but works with `yarn@1`, `yarn@2`, `pnpm` and `npm`.
 
@@ -10,13 +10,14 @@ Inspired by [@yarnpkg/plugin-typescript](https://www.npmjs.com/package/@yarnpkg/
 - [Install](#install)
 - [Configure](#configure)
 - [Add Packages](#add-packages)
-- [Install All Pacakges](#install-all-pacakges)
+- [Install All Packages](#install-all-packages)
 - [Add devDependency](#add-devdependency)
 - [CLI Options](#cli-options)
 - [As a Global Bin](#as-a-global-bin)
-	- [Install All Packages](#install-all-packages)
-	- [Select a Package Manager](#select-a-package-manager)
-	- [Project or User Config](#project-or-user-config)
+  - [Install All Packages](#install-all-packages-1)
+  - [Select a Package Manager](#select-a-package-manager)
+  - [Project or User Config](#project-or-user-config)
+- [MonoRepo Projects](#monorepo-projects)
 
 ## Install
 
@@ -50,9 +51,15 @@ _**package.json**_
 }
 ```
 
-> :star: When running `better-install` as an `npm` script, it will use the package manager that invoked the script to install packages, e.g., `yarn bi lodash` will use `yarn` to install `lodash` and `@types/lodash`.
+> :star: When running `better-install` as an `npm` script, it will use the package manager that invokes the script to run all commands, e.g., `yarn bi lodash` uses `yarn` to install `lodash` and `@types/lodash`.
 
 ## Add Packages
+
+The format for installing packages is
+
+```shell
+<PACKAGE_MANAGER> bi [PACKAGES...] [OPTIONS]
+```
 
 **yarn**
 
@@ -60,9 +67,9 @@ _**package.json**_
 yarn bi lodash yargs-parser minimist-options argville
 ```
 
-Install packages as a prod dependencies and corresponding `@types/` as a devDependencies using `yarn`.
+Install `lodash`, `yargs-parser` and `minimist-options` as a prod dependencies and corresponding `@types/` as a devDependencies using `yarn`.
 
-> :fire: `better-install` installs `@types/` packages if the dependency does not contain a `types`/`typings` field in _package.json_ or an _index.d.ts_ file in the package root. `minimist-options` includes a default declaration file, _index.d.ts_, in the package root but does not specify a `types` or a `typings` field within the [_package.json_](https://github.com/vadimdemedes/minimist-options/blob/master/package.json) file. This is enough for `better-install` to know that `minimist-options` comes bundled with types and therefore will skip installing `@types/minimist-options`. `better-install` checks for `types`, `typings` and _index.d.ts_ the [same as TypeScript](https://www.typescriptlang.org/docs/handbook/declaration-files/publishing.html).
+> :fire: `better-install` installs `@types/` packages if the dependency does not contain a `types` or `typings` field in _package.json_ or an _index.d.ts_ file in the package root. `minimist-options` includes a default declaration file, _index.d.ts_, in the package root but does not specify a `types` or a `typings` field within the [_package.json_](https://github.com/vadimdemedes/minimist-options/blob/master/package.json) file. This is enough for `better-install` to know that `minimist-options` comes bundled with types and therefore will skip installing `@types/minimist-options`. `better-install` checks for `types`, `typings` and _index.d.ts_ the [same as TypeScript](https://www.typescriptlang.org/docs/handbook/declaration-files/publishing.html).
 >
 > Like `minimist-options`, `argville` comes bundled with `types` and therfore `better-install` skips installing `@types/argville`.
 
@@ -82,7 +89,7 @@ pnpm bi -- lodash yargs-parser minimist-options argville
 npm run bi -- lodash yargs-parser minimist-options argville
 ```
 
-## Install All Pacakges
+## Install All Packages
 
 Run `better-install` without any args to install all packages listed in _package.json_ and corresponding `@types/`.
 
@@ -97,7 +104,7 @@ npm run bi
 
 ## Add devDependency
 
-`better-install` passes all cli flags to the underlying package manager. So it is possible to install dev dependencies with
+`better-install` passes all unknown cli flags to the underlying package manager. To install dev dependencies simply pass the dev flag for the appropriate package manager.
 
 ```shell
 # with yarn
@@ -124,11 +131,19 @@ Run `yarn bi --help` (or with `pnpm` or `npm`) to view a full list of options.
 		<td>--pm [npm|yarn|pnpm]</td>
 		<td>
 			Select the package manager to use to install dependencies. Defaults to npm or, 
-			if used as an npm script, the package manager that invoked the script
+			if used as an npm script, the package manager that invokes the script
 		</td>
 		<td>
 		</td>
 	</tr>
+  <tr>
+    <td>-f, --filter &lt;package_pattern&gt;</td>
+    <td>Restrict package installation to a subset of packages
+      within a monorepo project. Supports yarn and pnpm workspaces. 
+      Expects a single glob pattern or list of glob patterns and 
+      supports globbing against package names or package directories.</td>
+    <td>(default=["*"])</td>
+  </tr>
 	<tr>
 		<td>--verbose</td>
 		<td>Print debug messages.</td>
@@ -191,3 +206,45 @@ pm=yarn
 ```
 
 Now `bi` commands within `/path/to/project` will use `yarn` instead of `npm`. Can still override this using the `--pm` flag.
+
+## MonoRepo Projects
+
+`better-install` supports [yarn workspaces](https://yarnpkg.com/features/workspaces) and [pnpm workspaces](https://pnpm.js.org/en/pnpm-workspace_yaml).
+
+**yarn**
+
+```json
+// package.json
+{
+  "private": true,
+  "workspaces": ["packages/*"]
+}
+```
+
+Then use the `-f,--filter` flag to glob
+
+```shell
+yarn bi lodash --filter packages/sub-pkg
+# Or with globbing
+yarn bi lodash -f packages/*
+```
+
+The `-f,--filter` flag also supports globbing for the package name.
+
+```shell
+yarn bi lodash -f @pkg-name/sub-pkg
+# Or with globbing
+yarn bi lodash -f @pkg-name/*
+```
+
+**pnpm**
+
+```yaml
+# pnpm-workspace.yaml
+packages:
+  - packages/*
+```
+
+```shell
+pnpm bi lodash -f @pkg-name/*
+```

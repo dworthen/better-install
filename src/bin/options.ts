@@ -24,7 +24,10 @@ export const cliFlagOptions: Record<
     multiple: true,
     default: '*',
     description:
-      'A list of glob patterns to filter for in a monorepo project. ',
+      'Restrict package installation to a subset of packages ' +
+      'within a monorepo project. Supports yarn and pnpm workspaces. ' +
+      'Expects a single glob pattern or list of glob patterns and ' +
+      'supports globbing against package names or package directories.',
   },
 
   verbose: {

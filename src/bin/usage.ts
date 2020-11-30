@@ -69,7 +69,7 @@ export function getHelp({
       },
       {
         text: description,
-        padding: [0, 0, 1, 0],
+        padding: [0, 1, 1, 0],
       },
       {
         text: defaultValue,
