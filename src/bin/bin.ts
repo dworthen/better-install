@@ -14,6 +14,9 @@ import {
 } from '../app'
 import * as logger from '../app/logger'
 import { removeEnvFlags } from '../app/util/removeEnvFlags'
+import { getPackages } from '@manypkg/get-packages'
+import { relative } from 'path'
+import micromatch from 'micromatch'
 
 export async function run(argv: string[]): Promise<void> {
   const args = loadArgs(argv)
@@ -24,6 +27,10 @@ export async function run(argv: string[]): Promise<void> {
 
   if (args.colors === false) {
     logger.setColors(false)
+  }
+
+  if (args.filter == null) {
+    args.filter = '*'
   }
 
   if (args.help === true) {
@@ -50,78 +57,107 @@ export async function run(argv: string[]): Promise<void> {
   logger.debug('Package manager args: %O', pmArgsArray)
   logger.log('')
 
-  const installDepsCommand = getInstallCommand(pm, packages, pmArgsArray)
-  if (packages.length > 0) {
-    logger.info('Installing dependencies %O', packages)
-  } else {
-    logger.info('Installing dependencies.')
-  }
+  const monoRepoInformation = await getPackages(process.cwd())
 
-  logger.debug('Install command: %s', installDepsCommand)
+  logger.debug('Monorepo packages: %O', monoRepoInformation)
 
-  await install(installDepsCommand)
+  const allPackages: any[] = [monoRepoInformation.root]
 
-  const packagesToLoadTypes =
-    packages.length > 0 ? packages : getPackageJsonDependenciesWithoutTypes()
+  monoRepoInformation.packages.forEach((pkgInfo: any) => {
+    if (
+      allPackages.findIndex(allPkgInfo => allPkgInfo.dir === pkgInfo.dir) === -1
+    ) {
+      allPackages.push(pkgInfo)
+    }
+  })
 
-  logger.debug('Packages that may need types: %O', packagesToLoadTypes)
+  for (const packageInfo of allPackages) {
+    const dir = `${relative(process.cwd(), packageInfo.dir)}`.replace(
+      /\\/g,
+      '/',
+    )
+    if (packages.length > 0) {
+      logger.debug('Package directory: %s', dir)
+      logger.debug('Matcher: %s', args.filter)
+      const match =
+        micromatch.isMatch(dir, args.filter) ||
+        micromatch.isMatch(packageInfo.packageJson.name ?? '', args.filter)
+      logger.info('Match: %s', match)
+      if (!match) {
+        continue
+      }
+    }
+    const installDepsCommand = getInstallCommand(pm, packages, pmArgsArray)
 
-  const packagesNotBundledWithTypes = await getPackagesNotBundledWithTypes(
-    packagesToLoadTypes,
-  )
+    logger.debug('Install command: %s', installDepsCommand)
+    logger.info('Installing dependencies')
+    await install(installDepsCommand, dir)
 
-  logger.debug(
-    'Packages not bundled with types: %O',
-    packagesNotBundledWithTypes,
-  )
+    const packagesToLoadTypes =
+      packages.length > 0
+        ? packages
+        : getPackageJsonDependenciesWithoutTypes(packageInfo.packageJson)
 
-  const typePackagesToInstall = await getTypesPackagesToInstall(
-    packagesNotBundledWithTypes,
-  )
+    logger.debug('Packages that may need types: %O', packagesToLoadTypes)
 
-  logger.debug(
-    'Additional @types packages to install: %O',
-    typePackagesToInstall,
-  )
+    const packagesNotBundledWithTypes = await getPackagesNotBundledWithTypes(
+      packagesToLoadTypes,
+    )
 
-  const typesCommandFlags = [...toArgArray(removeEnvFlags(pmArgs)), '-D']
-  const installTypesCommand = getInstallCommand(
-    pm,
-    typePackagesToInstall,
-    typesCommandFlags,
-  )
+    logger.debug(
+      'Packages not bundled with types: %O',
+      packagesNotBundledWithTypes,
+    )
 
-  if (typePackagesToInstall.length > 0) {
-    logger.info('Installing @types %O', typePackagesToInstall)
-    logger.debug('Install types command: %s', installTypesCommand)
+    const typePackagesToInstall = await getTypesPackagesToInstall(
+      packagesNotBundledWithTypes,
+    )
 
-    await install(installTypesCommand)
-  } else {
-    logger.info('No additional @types packages to install.')
-  }
-
-  const packagesBundledWithTypes = diff(
-    packagesToLoadTypes,
-    packagesNotBundledWithTypes,
-  )
-  if (packagesBundledWithTypes.length > 0) {
-    logger.info('Packages bundled with types: %O', packagesBundledWithTypes)
-    logger.log('')
-  }
-
-  if (typePackagesToInstall.length > 0) {
-    logger.info(
-      'Additional @types packages installed: %O',
+    logger.debug(
+      'Additional @types packages to install: %O',
       typePackagesToInstall,
     )
-    logger.log('')
-  }
 
-  const packagesWithoutTypes = diff(
-    packagesNotBundledWithTypes.map(toTypesPackageName),
-    typePackagesToInstall,
-  )
-  if (packagesWithoutTypes.length > 0) {
-    logger.info('Packages without any types: %O', packagesWithoutTypes)
+    const typesCommandFlags = [...toArgArray(removeEnvFlags(pmArgs)), '-D']
+    const installTypesCommand = getInstallCommand(
+      pm,
+      typePackagesToInstall,
+      typesCommandFlags,
+    )
+
+    if (typePackagesToInstall.length > 0) {
+      logger.info('Installing @types %O', typePackagesToInstall)
+      logger.debug('Install types command: %s', installTypesCommand)
+      logger.debug('Package directory: %s', dir)
+
+      await install(installTypesCommand, dir)
+    } else {
+      logger.info('No additional @types packages to install.')
+    }
+
+    const packagesBundledWithTypes = diff(
+      packagesToLoadTypes,
+      packagesNotBundledWithTypes,
+    )
+    if (packagesBundledWithTypes.length > 0) {
+      logger.info('Packages bundled with types: %O', packagesBundledWithTypes)
+      logger.log('')
+    }
+
+    if (typePackagesToInstall.length > 0) {
+      logger.info(
+        'Additional @types packages installed: %O',
+        typePackagesToInstall,
+      )
+      logger.log('')
+    }
+
+    const packagesWithoutTypes = diff(
+      packagesNotBundledWithTypes.map(toTypesPackageName),
+      typePackagesToInstall,
+    )
+    if (packagesWithoutTypes.length > 0) {
+      logger.info('Packages without any types: %O', packagesWithoutTypes)
+    }
   }
 }

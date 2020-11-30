@@ -5,7 +5,7 @@ export async function install(
   cwd: string = process.cwd(),
 ): Promise<execa.ExecaChildProcess<string>> {
   const cmd = execa.command(command, {
-    localDir: cwd,
+    cwd,
   })
   cmd.stdout?.pipe(process.stdout)
   cmd.stderr?.pipe(process.stderr)

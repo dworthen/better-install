@@ -18,6 +18,14 @@ export const cliFlagOptions: Record<
       'the package manager that invokes the script',
   },
 
+  filter: {
+    type: 'string',
+    multiple: true,
+    default: '*',
+    description:
+      'A list of glob patterns to filter for in a monorepo project. ',
+  },
+
   verbose: {
     type: 'boolean',
     default: false,
