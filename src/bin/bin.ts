@@ -76,13 +76,14 @@ export async function run(argv: string[]): Promise<void> {
       /\\/g,
       '/',
     )
+    const filter = args.filter.map((f: string) =>
+      f.replace(/\\/g, '/').replace(/\/$/, ''),
+    )
+    logger.debug('Package directory: %s', dir)
     if (packages.length > 0) {
-      logger.debug('Package directory: %s', dir)
-      logger.debug('Matcher: %s', args.filter)
       const match =
-        micromatch.isMatch(dir, args.filter) ||
-        micromatch.isMatch(packageInfo.packageJson.name ?? '', args.filter)
-      logger.info('Match: %s', match)
+        micromatch.isMatch(dir, filter) ||
+        micromatch.isMatch(packageInfo.packageJson.name ?? '', filter)
       if (!match) {
         continue
       }
@@ -90,6 +91,10 @@ export async function run(argv: string[]): Promise<void> {
     const installDepsCommand = getInstallCommand(pm, packages, pmArgsArray)
 
     logger.debug('Install command: %s', installDepsCommand)
+    logger.info(
+      '========================= %s =========================',
+      packageInfo.packageJson.name ?? packageInfo.dir,
+    )
     logger.info('Installing dependencies')
     await install(installDepsCommand, dir)
 

@@ -20,6 +20,7 @@ export const cliFlagOptions: Record<
 
   filter: {
     type: 'string',
+    alias: 'f',
     multiple: true,
     default: '*',
     description:
